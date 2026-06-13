@@ -2,10 +2,242 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>strudel-music (placeholder)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>strudel-music</title>
+    <style>
+      /* The player shell. Total height = 100vh, split into:
+         - 42 px top status bar
+         - remainder = iframe
+         The iframe must NOT be sandboxed (see SKILL.md Hard rule #5). */
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        background: #0e0f12;
+        color: #e7e9ee;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+      #status-bar {
+        flex: 0 0 42px;        /* exactly 42 px tall, never grow or shrink */
+        height: 42px;
+        box-sizing: border-box;
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        border-bottom: 1px solid #1f2127;
+        background: #15171c;
+        font-size: 12px;
+        letter-spacing: 0.02em;
+        color: #b3b7c0;
+        user-select: none;
+      }
+      #status-bar .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4caf50;
+        margin-right: 8px;
+        box-shadow: 0 0 6px #4caf5088;
+      }
+      #status-bar .label {
+        margin-right: 16px;
+      }
+      #status-bar .hint {
+        margin-left: auto;
+        opacity: 0.6;
+      }
+      #strudel-frame {
+        flex: 1 1 auto;         /* fill the remaining height */
+        width: 100%;
+        border: 0;
+        display: block;
+        background: #0e0f12;
+      }
+      /* Floating { code } button. Bottom-right, above the iframe. */
+      #code-button {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 10;
+        padding: 8px 12px;
+        background: #15171c;
+        color: #e7e9ee;
+        border: 1px solid #2a2d35;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        opacity: 0.85;
+        transition: opacity 120ms ease, transform 120ms ease;
+      }
+      #code-button:hover {
+        opacity: 1;
+        transform: translateY(-1px);
+      }
+      #code-button:focus {
+        outline: 2px solid #4caf50;
+        outline-offset: 2px;
+      }
+      /* Code overlay. Toggled by the { code } button. */
+      #code-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: none;
+        background: rgba(0, 0, 0, 0.55);
+        align-items: center;
+        justify-content: center;
+        padding: 5vh 5vw;
+        box-sizing: border-box;
+      }
+      #code-overlay.open {
+        display: flex;
+      }
+      #code-panel {
+        background: #15171c;
+        color: #e7e9ee;
+        border: 1px solid #2a2d35;
+        border-radius: 10px;
+        width: min(900px, 90vw);
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+      }
+      #code-panel header {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #2a2d35;
+        font-size: 12px;
+        color: #b3b7c0;
+      }
+      #code-panel header .filename {
+        margin-right: auto;
+      }
+      #code-panel header button {
+        background: transparent;
+        color: #e7e9ee;
+        border: 1px solid #2a2d35;
+        border-radius: 6px;
+        font: inherit;
+        font-size: 11px;
+        padding: 4px 8px;
+        cursor: pointer;
+        margin-left: 8px;
+      }
+      #code-panel header button:hover {
+        background: #1f2127;
+      }
+      #code-panel pre {
+        margin: 0;
+        padding: 12px 14px;
+        overflow: auto;
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        white-space: pre;
+        color: #e7e9ee;
+        background: #0e0f12;
+      }
+    </style>
   </head>
   <body>
-    <p>index.html placeholder. Full player shell is added in a later iteration (AC-4).</p>
+    <div id="status-bar" role="status" aria-live="polite">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="label">strudel-music player</span>
+      <span class="hint">click play in the iframe once &middot; edits to <code>pattern.js</code> reload automatically</span>
+    </div>
+
+    <!--
+      The strudel.cc REPL iframe.
+      IMPORTANT: do NOT add a `sandbox` attribute. The WebAudio API inside
+      strudel.cc breaks under sandbox (see SKILL.md, Hard rule #5).
+    -->
+    <iframe
+      id="strudel-frame"
+      title="Strudel REPL"
+      src="about:blank"
+      allow="autoplay; microphone"
+    ></iframe>
+
+    <!-- Floating { code } button. Toggles the code overlay. -->
+    <button id="code-button" type="button" aria-haspopup="dialog" aria-controls="code-overlay">
+      { code }
+    </button>
+
+    <!-- Code overlay. Hidden by default; populated by main.js when the user
+         clicks the { code } button. -->
+    <div id="code-overlay" role="dialog" aria-modal="true" aria-labelledby="code-overlay-title" hidden>
+      <div id="code-panel">
+        <header>
+          <span id="code-overlay-title" class="filename">pattern.js</span>
+          <button id="code-copy" type="button">copy</button>
+          <button id="code-close" type="button">close</button>
+        </header>
+        <pre id="code-content">// (loading...)</pre>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.js"></script>
+    <script type="module">
+      // Wire the { code } floating button. This is a one-off UI binding that
+      // lives in index.html so that main.js can stay focused on encodePattern,
+      // loadPattern, and the HMR hook. We fetch the current pattern.js text
+      // and display it in the overlay.
+      const button = document.getElementById('code-button');
+      const overlay = document.getElementById('code-overlay');
+      const content = document.getElementById('code-content');
+      const copyBtn = document.getElementById('code-copy');
+      const closeBtn = document.getElementById('code-close');
+
+      async function refreshCode() {
+        try {
+          // Cache-bust the fetch so we always see the latest pattern.js.
+          const res = await fetch('/src/pattern.js?t=' + Date.now());
+          const text = await res.text();
+          content.textContent = text;
+        } catch (err) {
+          content.textContent = '// (failed to load pattern.js: ' + err.message + ')';
+        }
+      }
+
+      function openOverlay() {
+        refreshCode();
+        overlay.classList.add('open');
+        overlay.removeAttribute('hidden');
+      }
+      function closeOverlay() {
+        overlay.classList.remove('open');
+        overlay.setAttribute('hidden', '');
+      }
+
+      button.addEventListener('click', () => {
+        if (overlay.classList.contains('open')) closeOverlay();
+        else openOverlay();
+      });
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeOverlay();
+      });
+      closeBtn.addEventListener('click', closeOverlay);
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(content.textContent || '');
+          copyBtn.textContent = 'copied';
+          setTimeout(() => { copyBtn.textContent = 'copy'; }, 1200);
+        } catch (err) {
+          copyBtn.textContent = 'failed';
+          setTimeout(() => { copyBtn.textContent = 'copy'; }, 1200);
+        }
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('open')) closeOverlay();
+      });
+    </script>
   </body>
 </html>

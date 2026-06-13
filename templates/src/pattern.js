@@ -1,6 +1,9 @@
-// templates/src/pattern.js (placeholder)
-// Full starter pattern is added in a later iteration (AC-7).
+// templates/src/pattern.js
+// The agent's only edit target. Its default export is a template-literal
+// string of Strudel code that Vite HMR pushes into the strudel.cc iframe
+// via templates/src/main.js. Keep this file as a plain ESM string source:
+// exactly one `export default` statement, no other bindings, no imports.
 
-export default `// starter pattern placeholder
-note("c e g").sound("square")
+export default `setcpm(90/4)
+$: note("c e g").sound("square")
 `;

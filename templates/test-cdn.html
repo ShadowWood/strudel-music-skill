@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>strudel-music / test-cdn</title>
+    <style>
+      /*
+       * templates/test-cdn.html
+       *
+       * Self-contained diagnostic page for any future `@strudel/web`-style
+       * approach. This file is INTENTIONALLY NOT wired into the Vite build:
+       * it lives alongside templates/index.html but pulls the Strudel
+       * modules from a CDN (esm.sh) so the file can be opened directly in a
+       * browser, e.g.:
+       *
+       *     open http://localhost:5173/test-cdn.html
+       *     open file://.../templates/test-cdn.html
+       *
+       * The page is laid out as seven labeled test cards. Each card has its
+       * own "run" button and its own mini console; a top-level "global
+       * console" collects all output for easy side-by-side comparison.
+       *
+       * To run a test: open the page, click anywhere once to satisfy the
+       * browser autoplay policy, then click the per-test "run" button.
+       */
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0e0f12;
+        color: #e7e9ee;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+      header.page {
+        padding: 18px 22px;
+        border-bottom: 1px solid #1f2127;
+        background: #15171c;
+      }
+      header.page h1 {
+        margin: 0 0 6px 0;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+      header.page p {
+        margin: 0;
+        color: #b3b7c0;
+        font-size: 12px;
+        max-width: 80ch;
+      }
+      .controls {
+        display: flex;
+        gap: 8px;
+        padding: 12px 22px;
+        border-bottom: 1px solid #1f2127;
+        background: #11131a;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .controls button {
+        background: #15171c;
+        color: #e7e9ee;
+        border: 1px solid #2a2d35;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font: inherit;
+        cursor: pointer;
+      }
+      .controls button:hover { background: #1f2127; }
+      .controls .status {
+        margin-left: auto;
+        color: #b3b7c0;
+        font-size: 12px;
+      }
+      .controls .status .ok    { color: #4caf50; }
+      .controls .status .err   { color: #ff6b6b; }
+      .controls .status .ready { color: #b3b7c0; }
+      main {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 14px;
+        padding: 16px 22px 40px 22px;
+        max-width: 1100px;
+      }
+      .card {
+        background: #15171c;
+        border: 1px solid #1f2127;
+        border-radius: 8px;
+        padding: 14px 16px;
+      }
+      .card h2 {
+        margin: 0 0 6px 0;
+        font-size: 14px;
+        font-weight: 600;
+        color: #e7e9ee;
+        letter-spacing: 0.02em;
+      }
+      .card h2 .tag {
+        display: inline-block;
+        background: #1f2127;
+        color: #b3b7c0;
+        font-size: 11px;
+        font-weight: 500;
+        padding: 1px 6px;
+        border-radius: 4px;
+        margin-right: 8px;
+      }
+      .card p.why {
+        margin: 0 0 8px 0;
+        color: #b3b7c0;
+        font-size: 12px;
+      }
+      .card pre.code {
+        margin: 0 0 10px 0;
+        padding: 10px 12px;
+        background: #0e0f12;
+        color: #d6d9e0;
+        border: 1px solid #1f2127;
+        border-radius: 6px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 12px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .card .actions {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .card .actions button {
+        background: #1f2127;
+        color: #e7e9ee;
+        border: 1px solid #2a2d35;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      .card .actions button:hover { background: #262932; }
+      .card .actions button.run {
+        background: #1b3a1f;
+        border-color: #2a5a30;
+        color: #c8f0c8;
+      }
+      .card .actions button.run:hover { background: #234a29; }
+      .card .actions button.stop {
+        background: #3a1b1b;
+        border-color: #5a2a2a;
+        color: #f0c8c8;
+      }
+      .card .actions button.stop:hover { background: #4a2323; }
+      .card .console {
+        background: #0a0b0e;
+        color: #c8d0d8;
+        border: 1px solid #1f2127;
+        border-radius: 6px;
+        padding: 8px 10px;
+        min-height: 60px;
+        max-height: 180px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .card .console .ok  { color: #6dd47a; }
+      .card .console .err { color: #ff8080; }
+      .card .console .dim { color: #7c8390; }
+      #global-console {
+        background: #0a0b0e;
+        color: #c8d0d8;
+        border: 1px solid #1f2127;
+        border-radius: 6px;
+        padding: 10px 12px;
+        min-height: 120px;
+        max-height: 320px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      #global-console .ok  { color: #6dd47a; }
+      #global-console .err { color: #ff8080; }
+      #global-console .dim { color: #7c8390; }
+    </style>
+  </head>
+  <body>
+    <header class="page">
+      <h1>strudel-music / @strudel/web CDN diagnostic</h1>
+      <p>
+        This file is a self-contained scratchpad for any future move away from
+        the strudel.cc iframe approach. It loads <code>@strudel/web</code>
+        (and friends) from a CDN and exposes seven labeled test cases. Click
+        "init" below once (browser autoplay policy), then run each test in
+        turn. The expected verdict for each case is in the card description.
+      </p>
+    </header>
+
+    <div class="controls">
+      <button id="init-btn" type="button">init (unlock audio)</button>
+      <button id="hush-btn" type="button">hush (stop everything)</button>
+      <button id="clear-btn" type="button">clear global console</button>
+      <span class="status" id="init-status">
+        <span class="ready">status: not initialized</span>
+      </span>
+    </div>
+
+    <main>
+      <!-- Sanity check: can we evaluate a one-line pattern that should just
+           play a single synth note? This is the smallest possible test of
+           the evalScope + WebAudio plumbing. If this fails, nothing else
+           will work. -->
+      <section class="card" data-test="1">
+        <h2><span class="tag">Test 1</span>note play</h2>
+        <p class="why">
+          Expected: a single audible middle-C on the default synth. If the
+          evalScope pipeline is healthy, this is the smallest possible
+          pattern and should produce exactly one note.
+        </p>
+        <pre class="code">note("c4").s("sawtooth")</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="1" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="1" type="button">stop</button>
+        </div>
+        <div class="console" id="console-1">(no output yet)</div>
+      </section>
+
+      <!-- The user-facing pattern language compiles to a sequence of pattern
+           expressions. This test calls evalScope on a single declarative
+           statement and confirms that a bare expression is accepted and
+           starts playing. The pattern is intentionally trivial. -->
+      <section class="card" data-test="2">
+        <h2><span class="tag">Test 2</span>evaluate simple</h2>
+        <p class="why">
+          Expected: evalScope accepts a one-line expression and schedules
+          audio. No <code>$:</code> wrapper, no <code>setcpm</code>, no
+          stack. If this works but the marker-syntax case does not, the
+          issue is with declaration-marker handling.
+        </p>
+        <pre class="code">s("bd*2")</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="2" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="2" type="button">stop</button>
+        </div>
+        <div class="console" id="console-2">(no output yet)</div>
+      </section>
+
+      <!-- The `$:` prefix is the standard Strudel way to start a pattern.
+           The strudel.cc REPL supports it because the REPL's evaluator
+           splits the input into `$: ...;` blocks. The `@strudel/web`
+           evalScope must also handle this syntax for our pattern.js
+           strings to round-trip. -->
+      <section class="card" data-test="3">
+        <h2><span class="tag">Test 3</span>evaluate `$:`</h2>
+        <p class="why">
+          Expected: evalScope handles the <code>$:</code> declaration marker
+          the same way the strudel.cc REPL does. This is the same syntax
+          the skill's <code>pattern.js</code> templates use, so it MUST
+          work for any <code>@strudel/web</code>-based replacement of the
+          iframe.
+        </p>
+        <pre class="code">$: s("hh*8")</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="3" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="3" type="button">stop</button>
+        </div>
+        <div class="console" id="console-3">(no output yet)</div>
+      </section>
+
+      <!-- setcpm(cycles-per-minute) is the canonical tempo control in
+           Strudel. It MUST be exposed by the evalScope context. In the
+           previous `@strudel/web` attempt, setcpm was missing from the
+           global scope, so pattern.js files that used it threw
+           ReferenceError on the first beat. This test guards against
+           that regression. -->
+      <section class="card" data-test="4">
+        <h2><span class="tag">Test 4</span>evaluate setcpm</h2>
+        <p class="why">
+          Expected: <code>setcpm</code> is in scope and changes the tempo
+          of the following pattern. If this throws "setcpm is not
+          defined", the evalScope is missing the global helper and is
+          NOT a drop-in replacement for the strudel.cc REPL.
+        </p>
+        <pre class="code">setcpm(60)
+$: s("bd sd")</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="4" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="4" type="button">stop</button>
+        </div>
+        <div class="console" id="console-4">(no output yet)</div>
+      </section>
+
+      <!-- Drum-machine sample playback depends on a pre-baked bank of
+           audio files. The default sample prebake is what failed in the
+           previous `@strudel/web` attempt. This test deliberately
+           avoids any sample-based sound so we can isolate the
+           sample-prebake failure from any other audio-pipeline
+           failure. -->
+      <section class="card" data-test="5">
+        <h2><span class="tag">Test 5</span>sound without samples</h2>
+        <p class="why">
+          Expected: a built-in oscillator-based sound plays, with NO bank
+          downloads required. If this works but a sample-based test does
+          not, the failure is in the prebake / sample-bank path, not in
+          the core WebAudio pipeline.
+        </p>
+        <pre class="code">$: s("triangle").note("c3 e3 g3 c4")</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="5" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="5" type="button">stop</button>
+        </div>
+        <div class="console" id="console-5">(no output yet)</div>
+      </section>
+
+      <!-- The synth API is what backs the .sound("sawtooth" / "square" /
+           "triangle" / "sine") selector. Even if a sample bank is
+           missing, synth notes should always work because they
+           synthesize from scratch. This is the cleanest possible test
+           of the synth engine itself. -->
+      <section class="card" data-test="6">
+        <h2><span class="tag">Test 6</span>synth note</h2>
+        <p class="why">
+          Expected: a short melodic phrase on the default synth. If the
+          synth engine is broken, every higher-level pattern in the
+          skill is also broken, so this is a high-priority test.
+        </p>
+        <pre class="code">note("c4 e4 g4 c5").s("square").lpf(800)</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="6" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="6" type="button">stop</button>
+        </div>
+        <div class="console" id="console-6">(no output yet)</div>
+      </section>
+
+      <!-- Most real patterns use `stack(...)` to layer multiple voices.
+           This is the most common multi-pattern pattern in the skill's
+           examples.md and genres.md files. If `stack` is not on the
+           evalScope, the agent's generated patterns will throw on the
+           first iteration. -->
+      <section class="card" data-test="7">
+        <h2><span class="tag">Test 7</span>stack</h2>
+        <p class="why">
+          Expected: three layers (drums, bass, lead) play in parallel
+          without errors. If <code>stack</code> is missing, this is the
+          test that will fail first; this is also the most common shape
+          in <code>examples.md</code> and <code>genres.md</code>.
+        </p>
+        <pre class="code">stack(
+  s("bd*2, sd*2, hh*8"),
+  note("c2 c2 g1 g1").s("sawtooth"),
+  note("c4 e4 g4 e4").s("square")
+)</pre>
+        <div class="actions">
+          <button class="run"   data-action="run"   data-test="7" type="button">run</button>
+          <button class="stop"  data-action="stop"  data-test="7" type="button">stop</button>
+        </div>
+        <div class="console" id="console-7">(no output yet)</div>
+      </section>
+
+      <section class="card">
+        <h2>Global console</h2>
+        <p class="why">
+          Aggregated output from every test above, in run order. Useful
+          for side-by-side comparison of verdicts and for capturing the
+          output when filing a bug against <code>@strudel/web</code>.
+        </p>
+        <div id="global-console">(empty)</div>
+      </section>
+    </main>
+
+    <script type="module">
+      // -------------------------------------------------------------------
+      // Module imports. All from a CDN via esm.sh. If the CDN or the
+      // package name changes, this is the only block that needs editing.
+      // -------------------------------------------------------------------
+      //
+      // We import lazily inside the init() function so the file can be
+      // loaded and laid out even if the user has not clicked "init" yet.
+
+      const STRUDEL_MODULES = {
+        '@strudel/web':    'https://esm.sh/@strudel/web',
+        '@strudel/mini':   'https://esm.sh/@strudel/mini',
+        '@strudel/core':   'https://esm.sh/@strudel/core',
+        '@strudel/tonal':  'https://esm.sh/@strudel/tonal',
+        '@strudel/xen':    'https://esm.sh/@strudel/xen',
+      };
+
+      // The seven test cases. Each is { name, code, expect }. The order in
+      // this array must match the test numbers 1..7 from the AC.
+      const TESTS = [
+        { n: 1, name: 'note play',           code: 'note("c4").s("sawtooth")' },
+        { n: 2, name: 'evaluate simple',     code: 's("bd*2")' },
+        { n: 3, name: 'evaluate `$:`',       code: '$: s("hh*8")' },
+        { n: 4, name: 'evaluate setcpm',     code: 'setcpm(60)\n$: s("bd sd")' },
+        { n: 5, name: 'sound without samples', code: '$: s("triangle").note("c3 e3 g3 c4")' },
+        { n: 6, name: 'synth note',          code: 'note("c4 e4 g4 c5").s("square").lpf(800)' },
+        { n: 7, name: 'stack',               code: 'stack(\n  s("bd*2, sd*2, hh*8"),\n  note("c2 c2 g1 g1").s("sawtooth"),\n  note("c4 e4 g4 e4").s("square")\n)' },
+      ];
+
+      // The loaded module namespace from the @strudel CDN imports.
+      // Populated by init() and consumed by the per-test run handlers.
+      let api = null;
+
+      // -------------------------------------------------------------------
+      // Console helpers
+      // -------------------------------------------------------------------
+      function appendConsole(el, text, cls) {
+        if (!el) return;
+        if (el.textContent === '(no output yet)' || el.textContent === '(empty)') {
+          el.textContent = '';
+        }
+        const span = document.createElement('span');
+        if (cls) span.className = cls;
+        span.textContent = text + '\n';
+        el.appendChild(span);
+        el.scrollTop = el.scrollHeight;
+      }
+      function clearConsole(el) {
+        if (!el) return;
+        el.textContent = '(no output yet)';
+      }
+      const globalConsole = document.getElementById('global-console');
+      function logGlobal(text, cls) {
+        appendConsole(globalConsole, text, cls);
+      }
+      function consoleFor(n) {
+        return document.getElementById('console-' + n);
+      }
+
+      // -------------------------------------------------------------------
+      // Status indicator
+      // -------------------------------------------------------------------
+      const statusEl = document.getElementById('init-status');
+      function setStatus(text, cls) {
+        statusEl.innerHTML = '<span class="' + cls + '">status: ' + text + '</span>';
+      }
+
+      // -------------------------------------------------------------------
+      // init() — import the @strudel/web stack and unlock the audio context
+      // -------------------------------------------------------------------
+      async function init() {
+        setStatus('loading @strudel/web from CDN...', 'ready');
+        try {
+          // esm.sh returns a namespace; we keep refs to the four functions
+          // we actually use.
+          const web    = await import(STRUDEL_MODULES['@strudel/web']);
+          // We import the others so the dependency graph is fully realized
+          // before the user starts clicking run. (esm.sh will tree-shake
+          // unused modules, but we want them in the page cache.)
+          await import(STRUDEL_MODULES['@strudel/mini']);
+          await import(STRUDEL_MODULES['@strudel/core']);
+          await import(STRUDEL_MODULES['@strudel/tonal']);
+          await import(STRUDEL_MODULES['@strudel/xen']);
+
+          api = web;
+          setStatus('ready (' + Object.keys(web).length + ' exports from @strudel/web)', 'ok');
+          logGlobal('init ok: @strudel/web loaded with ' + Object.keys(web).length + ' exports', 'ok');
+          for (const k of Object.keys(web).sort()) {
+            logGlobal('  - ' + k + ' : ' + typeof web[k], 'dim');
+          }
+        } catch (err) {
+          setStatus('init failed: ' + err.message, 'err');
+          logGlobal('init failed: ' + (err && err.message ? err.message : String(err)), 'err');
+        }
+      }
+
+      // -------------------------------------------------------------------
+      // runTest(n) — evaluate TESTS[n-1].code via api.evalScope
+      // -------------------------------------------------------------------
+      async function runTest(n) {
+        const t = TESTS.find(x => x.n === n);
+        if (!t) {
+          logGlobal('no such test: ' + n, 'err');
+          return;
+        }
+        const c = consoleFor(n);
+        if (!api) {
+          appendConsole(c, 'init not called yet; click "init (unlock audio)" first', 'err');
+          logGlobal('test ' + n + ' skipped: api not loaded', 'err');
+          return;
+        }
+        clearConsole(c);
+        appendConsole(c, '> ' + t.name, 'dim');
+        appendConsole(c, '> code: ' + t.code.replace(/\n/g, '\\n'), 'dim');
+        logGlobal('> ' + t.name, 'ok');
+        try {
+          // The strudel.cc REPL uses transpiled=true, so we do too. If the
+          // user wants to test a different mode, change the second arg.
+          const result = await api.evalScope(t.code, true);
+          appendConsole(c, 'evalScope returned: ' + describe(result), 'ok');
+          logGlobal(t.name + ' ok: evalScope returned ' + describe(result), 'ok');
+        } catch (err) {
+          appendConsole(c, 'evalScope threw: ' + (err && err.message ? err.message : String(err)), 'err');
+          logGlobal(t.name + ' FAILED: ' + (err && err.message ? err.message : String(err)), 'err');
+        }
+      }
+
+      // -------------------------------------------------------------------
+      // stopTest(n) — call api.hush() and report
+      // -------------------------------------------------------------------
+      function stopTest(n) {
+        const t = TESTS.find(x => x.n === n);
+        if (!t) return;
+        const c = consoleFor(n);
+        if (!api || typeof api.hush !== 'function') {
+          appendConsole(c, 'no hush() available; init not called or @strudel/web missing hush export', 'err');
+          return;
+        }
+        try {
+          api.hush();
+          appendConsole(c, 'hush() ok', 'ok');
+          logGlobal(t.name + ' stopped via hush()', 'dim');
+        } catch (err) {
+          appendConsole(c, 'hush() threw: ' + (err && err.message ? err.message : String(err)), 'err');
+        }
+      }
+
+      function describe(x) {
+        if (x === undefined) return 'undefined';
+        if (x === null)      return 'null';
+        if (typeof x === 'function') return 'function ' + (x.name || '(anonymous)');
+        if (typeof x === 'object')  return 'object { ' + Object.keys(x).slice(0, 4).join(', ') + (Object.keys(x).length > 4 ? ', ...' : '') + ' }';
+        return typeof x + ' ' + JSON.stringify(x).slice(0, 80);
+      }
+
+      // -------------------------------------------------------------------
+      // Wire up the buttons. Use event delegation on the controls + main
+      // containers so adding more tests later does not require rewiring.
+      // -------------------------------------------------------------------
+      document.getElementById('init-btn').addEventListener('click', init);
+      document.getElementById('hush-btn').addEventListener('click', () => {
+        if (api && typeof api.hush === 'function') {
+          api.hush();
+          logGlobal('hush() called from global button', 'dim');
+        } else {
+          logGlobal('hush() not available; init not called', 'err');
+        }
+      });
+      document.getElementById('clear-btn').addEventListener('click', () => {
+        clearConsole(globalConsole);
+      });
+
+      document.querySelector('main').addEventListener('click', (ev) => {
+        const btn = ev.target.closest('button[data-action]');
+        if (!btn) return;
+        const n = Number(btn.getAttribute('data-test'));
+        const action = btn.getAttribute('data-action');
+        if (!Number.isFinite(n)) return;
+        if (action === 'run')  runTest(n);
+        if (action === 'stop') stopTest(n);
+      });
+    </script>
+  </body>
+</html>

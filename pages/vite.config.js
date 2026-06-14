@@ -8,4 +8,7 @@ export default defineConfig({
     open: true,
   },
   base: '/',
+  ssr: {
+    noExternal: ['lucide-react'],
+  },
 });

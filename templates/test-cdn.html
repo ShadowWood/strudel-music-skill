@@ -165,9 +165,9 @@
         word-break: break-word;
         font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
-      .card .console .ok  { color: #6dd47a; }
-      .card .console .err { color: #ff8080; }
-      .card .console .dim { color: #7c8390; }
+      .console .ok,  #global-console .ok  { color: #6dd47a; }
+      .console .err, #global-console .err { color: #ff8080; }
+      .console .dim, #global-console .dim { color: #7c8390; }
       #global-console {
         background: #0a0b0e;
         color: #c8d0d8;
@@ -181,9 +181,6 @@
         word-break: break-word;
         font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
-      #global-console .ok  { color: #6dd47a; }
-      #global-console .err { color: #ff8080; }
-      #global-console .dim { color: #7c8390; }
     </style>
   </head>
   <body>
@@ -406,6 +403,9 @@ $: s("bd sd")</pre>
       // -------------------------------------------------------------------
       // Console helpers
       // -------------------------------------------------------------------
+      function errMsg(err) {
+        return err && err.message ? err.message : String(err);
+      }
       function appendConsole(el, text, cls) {
         if (!el) return;
         if (el.textContent === '(no output yet)' || el.textContent === '(empty)') {
@@ -462,7 +462,7 @@ $: s("bd sd")</pre>
           }
         } catch (err) {
           setStatus('init failed: ' + err.message, 'err');
-          logGlobal('init failed: ' + (err && err.message ? err.message : String(err)), 'err');
+          logGlobal('init failed: ' + errMsg(err), 'err');
         }
       }
 
@@ -492,8 +492,8 @@ $: s("bd sd")</pre>
           appendConsole(c, 'evalScope returned: ' + describe(result), 'ok');
           logGlobal(t.name + ' ok: evalScope returned ' + describe(result), 'ok');
         } catch (err) {
-          appendConsole(c, 'evalScope threw: ' + (err && err.message ? err.message : String(err)), 'err');
-          logGlobal(t.name + ' FAILED: ' + (err && err.message ? err.message : String(err)), 'err');
+          appendConsole(c, 'evalScope threw: ' + errMsg(err), 'err');
+          logGlobal(t.name + ' FAILED: ' + errMsg(err), 'err');
         }
       }
 
@@ -513,7 +513,7 @@ $: s("bd sd")</pre>
           appendConsole(c, 'hush() ok', 'ok');
           logGlobal(t.name + ' stopped via hush()', 'dim');
         } catch (err) {
-          appendConsole(c, 'hush() threw: ' + (err && err.message ? err.message : String(err)), 'err');
+          appendConsole(c, 'hush() threw: ' + errMsg(err), 'err');
         }
       }
 

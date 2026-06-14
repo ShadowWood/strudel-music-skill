@@ -152,35 +152,29 @@
         color: #f0c8c8;
       }
       .card .actions button.stop:hover { background: #4a2323; }
-      .card .console {
+      .card .console, #global-console {
         background: #0a0b0e;
         color: #c8d0d8;
         border: 1px solid #1f2127;
         border-radius: 6px;
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .card .console {
         padding: 8px 10px;
         min-height: 60px;
         max-height: 180px;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
-      .console .ok,  #global-console .ok  { color: #6dd47a; }
-      .console .err, #global-console .err { color: #ff8080; }
-      .console .dim, #global-console .dim { color: #7c8390; }
       #global-console {
-        background: #0a0b0e;
-        color: #c8d0d8;
-        border: 1px solid #1f2127;
-        border-radius: 6px;
         padding: 10px 12px;
         min-height: 120px;
         max-height: 320px;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       }
+      .console .ok, #global-console .ok  { color: #6dd47a; }
+      .console .err, #global-console .err { color: #ff8080; }
+      .console .dim, #global-console .dim { color: #7c8390; }
     </style>
   </head>
   <body>
@@ -376,12 +370,13 @@ $: s("bd sd")</pre>
       // We import lazily inside the init() function so the file can be
       // loaded and laid out even if the user has not clicked "init" yet.
 
+      const CDN = 'https://esm.sh/@strudel';
       const STRUDEL_MODULES = {
-        '@strudel/web':    'https://esm.sh/@strudel/web',
-        '@strudel/mini':   'https://esm.sh/@strudel/mini',
-        '@strudel/core':   'https://esm.sh/@strudel/core',
-        '@strudel/tonal':  'https://esm.sh/@strudel/tonal',
-        '@strudel/xen':    'https://esm.sh/@strudel/xen',
+        '@strudel/web':    CDN + '/web',
+        '@strudel/mini':   CDN + '/mini',
+        '@strudel/core':   CDN + '/core',
+        '@strudel/tonal':  CDN + '/tonal',
+        '@strudel/xen':    CDN + '/xen',
       };
 
       // The seven test cases. Each is { name, code, expect }. The order in
@@ -443,8 +438,7 @@ $: s("bd sd")</pre>
       async function init() {
         setStatus('loading @strudel/web from CDN...', 'ready');
         try {
-          // esm.sh returns a namespace; we keep refs to the four functions
-          // we actually use.
+          // esm.sh returns a namespace; we keep a ref to the @strudel/web namespace.
           const web    = await import(STRUDEL_MODULES['@strudel/web']);
           // We import the others so the dependency graph is fully realized
           // before the user starts clicking run. (esm.sh will tree-shake

@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-cream font-body text-charcoal antialiased;
+  }
+
+  ::selection {
+    @apply bg-terracotta/20 text-charcoal;
+  }
+}
+
+@layer components {
+  .editorial-page {
+    @apply mx-auto max-w-editorial px-6 py-10 md:px-10 md:py-14 lg:px-16;
+  }
+
+  .editorial-paper {
+    @apply rounded-sm bg-cream shadow-paper;
+  }
+
+  .section-divider {
+    @apply border-t border-divider;
+  }
+
+  .label-meta {
+    @apply font-label text-[0.65rem] font-medium uppercase tracking-[0.2em] text-warm-gray;
+  }
+
+  .drop-cap::first-letter {
+    @apply float-left mr-3 mt-1 font-display text-5xl font-semibold leading-none text-terracotta md:text-6xl;
+  }
+
+  .toc-leader {
+    @apply flex items-baseline gap-2;
+  }
+
+  .toc-leader::after {
+    content: '';
+    @apply mx-2 mb-1 min-w-[1rem] flex-1 border-b border-dotted border-divider;
+  }
+
+  .floating-card {
+    @apply rounded-sm border border-divider bg-white p-6 shadow-float md:p-8;
+  }
+
+  .exercise-box {
+    @apply rounded-sm border border-terracotta/40 bg-white/60 p-6 md:p-8;
+  }
+
+  .code-block {
+    @apply overflow-x-auto rounded-sm border border-divider bg-white/80 p-5 font-mono text-sm leading-relaxed text-charcoal;
+  }
+
+  .genre-tag {
+    @apply inline-block cursor-default rounded-sm border border-divider px-4 py-2 font-label text-xs uppercase tracking-wider text-warm-gray transition-colors duration-200 hover:border-terracotta hover:text-terracotta;
+  }
+
+  .feature-card {
+    @apply rounded-sm border border-divider bg-white/50 p-6 transition-colors duration-200 hover:border-terracotta/30 hover:bg-white/80;
+  }
+
+  .screenshot-frame {
+    @apply w-full;
+  }
+
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-terracotta focus-visible:ring-offset-2 focus-visible:ring-offset-cream;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

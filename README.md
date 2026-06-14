@@ -17,6 +17,8 @@ A re-implementation of the `strudel-music` skill. Users describe music in natura
 ├── genres.md                # Genre templates
 ├── examples.md              # Paired natural-language -> code examples
 ├── install.sh               # Skill installer for supported agents
+├── pages/                   # Vite + React landing page (deploy to Vercel)
+│   └── public/images/       # Demo screenshots
 ├── scripts/
 │   ├── init.sh              # Player initializer
 │   └── download-samples.sh  # Offline sample prep
@@ -43,6 +45,36 @@ bash scripts/init.sh
 ```
 
 After the first load, the agent edits `templates/src/pattern.js`. The iframe reloads within roughly one second on every save.
+
+## Demo
+
+This walkthrough shows the full flow: one natural-language prompt, agent-authored Strudel code, and live playback in the browser.
+
+Example prompt:
+
+```
+/strudel-music please make a house music with full parts(intro, build-up, drop, outro).
+```
+
+### Step 1 — Describe
+
+Invoke the skill with a natural-language prompt. The agent plans the arrangement and checks that the dev server is running.
+
+![Step 1 — Describe your track](pages/public/images/input_step1.png)
+
+### Step 2 — Generate
+
+The agent edits `pattern.js`, structures intro, build-up, drop, and outro with `arrange()`, and summarizes the track before playback.
+
+![Step 2 — Agent writes the pattern](pages/public/images/input_step2.png)
+
+### Step 3 — Preview
+
+The Strudel REPL loads the generated code via iframe hash. Click play once inside the REPL, then every save reloads in about a second.
+
+![Step 3 — Hear it in the browser](pages/public/images/preview_page.png)
+
+**Result:** a 124 BPM F minor house track — intro (8 bars), build-up (8 bars), drop (16 bars), and outro (8 bars) across 40 bars (~77 seconds).
 
 ## Supported agents
 

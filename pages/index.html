@@ -40,7 +40,7 @@
 
     /* ─── Section spacing ─── */
     section { padding: 4rem 0; }
-    section + section { border-top: 2px dashed var(--border); border-image: repeating-linear-gradient(90deg, var(--border), var(--border) 8px, transparent 8px, transparent 12px) 1; border-top-style: dashed; }
+    section + section { border-top: 2px dashed var(--border); border-image: repeating-linear-gradient(90deg, var(--border), var(--border) 8px, transparent 8px, transparent 12px) 1; }
 
     /* ─── Headings ─── */
     h1, h2, h3 {
@@ -171,7 +171,7 @@
       height: 3px;
       border-top: 2px dashed var(--accent);
       transform: rotate(-0.5deg);
-      border-radius: 50% 50% 50% 50% / 100% 100% 0% 0%;
+      border-radius: 50% / 100% 100% 0% 0%;
       opacity: 0.35;
     }
     .feature-card:hover {

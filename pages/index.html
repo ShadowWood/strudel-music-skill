@@ -198,6 +198,22 @@
     .feature-card h3 { margin-bottom: 0.4rem; color: var(--text-primary); }
     .feature-card p { font-size: 0.92rem; color: var(--text-secondary); line-height: 1.6; }
 
+    .genres-intro {
+      color: var(--text-secondary);
+      max-width: 540px;
+    }
+
+    .quickstart-intro {
+      color: var(--text-secondary);
+    }
+
+    .footer-copyright {
+      margin-top: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
     /* ─── Genre tags ─── */
     .genre-tags {
       display: flex;
@@ -319,18 +335,20 @@
 <body>
 
   <!-- ─── Hero ─── -->
-  <section class="hero">
-    <div class="container">
-      <h1>strudel‑music</h1>
-      <p class="hero-tagline">
-        Turn natural language into generative music — describe what you hear
-        and let the skill write the Strudel code for you.
-      </p>
-      <a href="https://github.com/ShadowWood/strudel-music-skill" class="hero-cta" aria-label="View on GitHub">
-        View on GitHub
-      </a>
-    </div>
-  </section>
+  <header>
+    <section class="hero">
+      <div class="container">
+        <h1>strudel‑music</h1>
+        <p class="hero-tagline">
+          Turn natural language into generative music — describe what you hear
+          and let the skill write the Strudel code for you.
+        </p>
+        <a href="https://github.com/ShadowWood/strudel-music-skill" class="hero-cta" aria-label="View on GitHub">
+          View on GitHub
+        </a>
+      </div>
+    </section>
+  </header>
 
   <!-- ─── Decorative divider ─── -->
   <div class="sketch-divider" aria-hidden="true">
@@ -338,6 +356,8 @@
       <path d="M4 8 C20 0, 30 16, 48 8 S72 16, 90 8 S104 16, 116 8" stroke="#4caf50" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" />
     </svg>
   </div>
+
+  <main>
 
   <!-- ─── About ─── -->
   <section aria-labelledby="about-heading">
@@ -420,8 +440,7 @@
   <section aria-labelledby="genres-heading">
     <div class="container">
       <h2 id="genres-heading" class="section-title">Supported Genres</h2>
-      <p style="color:var(--text-secondary); max-width:540px;">
-        Each genre includes curated rhythm and tonal patterns — mix, layer, and
+      <p class="genres-intro">Each genre includes curated rhythm and tonal patterns — mix, layer, and
         tweak to create something uniquely yours.
       </p>
       <div class="genre-tags">
@@ -441,8 +460,7 @@
   <section aria-labelledby="quickstart-heading">
     <div class="container">
       <h2 id="quickstart-heading" class="section-title">Quick Start</h2>
-      <p style="color:var(--text-secondary);">
-        Install the skill, describe what you hear, and listen — three steps.
+      <p class="quickstart-intro">Install the skill, describe what you hear, and listen — three steps.
       </p>
       <div class="code-block">
         <span class="comment"># 1. Install the skill into your agent</span>
@@ -460,6 +478,8 @@
     </div>
   </section>
 
+  </main>
+
   <!-- ─── Footer ─── -->
   <footer>
     <div class="container">
@@ -469,8 +489,7 @@
         &nbsp;·&nbsp;
         <a href="https://github.com/ShadowWood/strudel-music-skill" target="_blank" rel="noopener noreferrer">GitHub</a>
       </p>
-      <p style="margin-top:0.6rem; font-size:0.82rem; color:var(--text-secondary); opacity:0.6;">
-        strudel‑music &copy; 2026
+      <p class="footer-copyright">strudel‑music &copy; 2026
       </p>
     </div>
   </footer>
